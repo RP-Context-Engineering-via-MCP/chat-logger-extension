@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI Chat Logger</title>
+  <style>
+    /* ─── Reset & Base ─── */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      width: 400px;
+      min-height: 460px;
+      max-height: 560px;
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      background: #0f0f14;
+      color: #e4e4e7;
+      overflow-y: auto;
+    }
+
+    /* ─── Header ─── */
+    .header {
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+      padding: 16px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .logo {
+      width: 28px;
+      height: 28px;
+      background: linear-gradient(135deg, #6366f1, #8b5cf6);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+    }
+
+    .header h1 {
+      font-size: 15px;
+      font-weight: 600;
+      letter-spacing: -0.3px;
+    }
+
+    .status-badge {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11px;
+      color: #a1a1aa;
+      background: rgba(255, 255, 255, 0.04);
+      padding: 4px 10px;
+      border-radius: 20px;
+    }
+
+    .status-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: #ef4444;
+      transition: background 0.3s;
+    }
+
+    .status-dot.connected {
+      background: #22c55e;
+    }
+
+    /* ─── Stats bar ─── */
+    .stats-bar {
+      display: flex;
+      gap: 1px;
+      background: rgba(255, 255, 255, 0.03);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    .stat {
+      flex: 1;
+      text-align: center;
+      padding: 10px 8px;
+    }
+
+    .stat-value {
+      font-size: 18px;
+      font-weight: 700;
+      color: #a78bfa;
+    }
+
+    .stat-label {
+      font-size: 10px;
+      color: #71717a;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-top: 2px;
+    }
+
+    /* ─── Captures list ─── */
+    .section-title {
+      font-size: 11px;
+      color: #71717a;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      padding: 12px 20px 6px;
+    }
+
+    .captures-list {
+      padding: 0 12px 12px;
+      max-height: 300px;
+      overflow-y: auto;
+    }
+
+    .captures-list::-webkit-scrollbar {
+      width: 4px;
+    }
+
+    .captures-list::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    .captures-list::-webkit-scrollbar-thumb {
+      background: #27272a;
+      border-radius: 4px;
+    }
+
+    .capture-card {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      border-radius: 10px;
+      padding: 12px 14px;
+      margin-bottom: 8px;
+      transition: background 0.2s, border-color 0.2s;
+      cursor: default;
+    }
+
+    .capture-card:hover {
+      background: rgba(255, 255, 255, 0.06);
+      border-color: rgba(139, 92, 246, 0.3);
+    }
+
+    .capture-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 8px;
+    }
+
+    .source-badge {
+      font-size: 10px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      padding: 3px 8px;
+      border-radius: 6px;
+      color: #fff;
+    }
+
+    .source-badge.chatgpt {
+      background: rgba(16, 163, 127, 0.25);
+      color: #34d399;
+    }
+
+    .source-badge.gemini {
+      background: rgba(59, 130, 246, 0.25);
+      color: #60a5fa;
+    }
+
+    .source-badge.perplexity {
+      background: rgba(168, 85, 247, 0.25);
+      color: #c084fc;
+    }
+
+    .source-badge.claude {
+      background: rgba(251, 146, 60, 0.25);
+      color: #fb923c;
+    }
+
+    .capture-time {
+      font-size: 10px;
+      color: #52525b;
+    }
+
+    .capture-prompt {
+      font-size: 12px;
+      color: #d4d4d8;
+      line-height: 1.4;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    .capture-prompt::before {
+      content: '▸ ';
+      color: #6366f1;
+      font-weight: 700;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 40px 20px;
+      color: #52525b;
+    }
+
+    .empty-state .icon {
+      font-size: 32px;
+      margin-bottom: 10px;
+      opacity: 0.5;
+    }
+
+    .empty-state p {
+      font-size: 13px;
+      line-height: 1.6;
+    }
+
+    /* ─── Settings ─── */
+    .settings {
+      padding: 12px 20px 16px;
+      border-top: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    .settings label {
+      display: block;
+      font-size: 11px;
+      color: #71717a;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 6px;
+    }
+
+    .settings-row {
+      display: flex;
+      gap: 8px;
+    }
+
+    .settings input {
+      flex: 1;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      color: #e4e4e7;
+      padding: 8px 12px;
+      border-radius: 8px;
+      font-size: 12px;
+      font-family: 'Cascadia Code', 'Fira Code', monospace;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    .settings input:focus {
+      border-color: rgba(99, 102, 241, 0.5);
+    }
+
+    .settings button {
+      background: linear-gradient(135deg, #6366f1, #8b5cf6);
+      color: #fff;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity 0.2s;
+    }
+
+    .settings button:hover {
+      opacity: 0.85;
+    }
+
+    .save-feedback {
+      font-size: 11px;
+      color: #22c55e;
+      margin-top: 6px;
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+
+    .save-feedback.visible {
+      opacity: 1;
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- Header -->
+  <div class="header">
+    <div class="header-left">
+      <div class="logo">📝</div>
+      <h1>AI Chat Logger</h1>
+    </div>
+    <div class="status-badge">
+      <span class="status-dot" id="statusDot"></span>
+      <span id="statusText">Checking...</span>
+    </div>
+  </div>
+
+  <!-- Stats -->
+  <div class="stats-bar">
+    <div class="stat">
+      <div class="stat-value" id="totalCount">0</div>
+      <div class="stat-label">Total</div>
+    </div>
+    <div class="stat">
+      <div class="stat-value" id="todayCount">0</div>
+      <div class="stat-label">Today</div>
+    </div>
+    <div class="stat">
+      <div class="stat-value" id="sourcesCount">0</div>
+      <div class="stat-label">Sources</div>
+    </div>
+  </div>
+
+  <!-- Recent captures -->
+  <div class="section-title">Recent Captures</div>
+  <div class="captures-list" id="capturesList">
+    <div class="empty-state" id="emptyState">
+      <div class="icon">💬</div>
+      <p>No captures yet.<br>Chat on any supported AI platform to get started.</p>
+    </div>
+  </div>
+
+  <!-- Settings -->
+  <div class="settings">
+    <label for="backendUrl">Backend URL</label>
+    <div class="settings-row">
+      <input type="text" id="backendUrl" placeholder="http://localhost:3005">
+      <button id="saveBtn">Save</button>
+    </div>
+    <div class="save-feedback" id="saveFeedback">✓ Saved</div>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+
+</html>

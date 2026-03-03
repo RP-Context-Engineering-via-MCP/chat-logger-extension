@@ -1,0 +1,71 @@
+{
+  "manifest_version": 3,
+  "name": "AI Chat Logger",
+  "description": "Captures user prompts and AI responses from ChatGPT, Gemini, Perplexity, and Claude — logs them to a backend API.",
+  "version": "1.0.0",
+  "permissions": [
+    "storage",
+    "activeTab"
+  ],
+  "host_permissions": [
+    "https://chatgpt.com/*",
+    "https://gemini.google.com/*",
+    "https://www.perplexity.ai/*",
+    "https://claude.ai/*",
+    "http://localhost:3005/*"
+  ],
+  "background": {
+    "service_worker": "background/background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://chatgpt.com/*"
+      ],
+      "js": [
+        "utils/sessionId.js",
+        "utils/domWatcher.js",
+        "content/chatgpt.js"
+      ],
+      "run_at": "document_idle"
+    },
+    {
+      "matches": [
+        "https://gemini.google.com/*"
+      ],
+      "js": [
+        "utils/sessionId.js",
+        "utils/domWatcher.js",
+        "content/gemini.js"
+      ],
+      "run_at": "document_idle"
+    },
+    {
+      "matches": [
+        "https://www.perplexity.ai/*"
+      ],
+      "js": [
+        "utils/sessionId.js",
+        "utils/domWatcher.js",
+        "content/perplexity.js"
+      ],
+      "run_at": "document_idle"
+    },
+    {
+      "matches": [
+        "https://claude.ai/*"
+      ],
+      "js": [
+        "utils/sessionId.js",
+        "utils/domWatcher.js",
+        "content/claude.js"
+      ],
+      "run_at": "document_idle"
+    }
+  ],
+  "action": {
+    "default_popup": "popup/popup.html",
+    "default_title": "AI Chat Logger"
+  },
+  "icons": {}
+}
