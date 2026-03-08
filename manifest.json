@@ -1,18 +1,20 @@
 {
   "manifest_version": 3,
-  "name": "AI Chat Logger",
-  "description": "Captures user prompts and AI responses from ChatGPT, Gemini, Perplexity, and Claude — logs them to a backend API.",
-  "version": "1.0.0",
+  "name": "Memora Logger",
+  "description": "Captures chat prompts and AI responses from ChatGPT, Gemini, Perplexity, and Claude — logs them to your Memora session.",
+  "version": "2.0.0",
   "permissions": [
     "storage",
-    "activeTab"
+    "activeTab",
+    "tabs"
   ],
   "host_permissions": [
     "https://chatgpt.com/*",
     "https://gemini.google.com/*",
     "https://www.perplexity.ai/*",
     "https://claude.ai/*",
-    "http://localhost:3005/*"
+    "http://localhost:3005/*",
+    "http://localhost:5173/*"
   ],
   "background": {
     "service_worker": "background/background.js"
@@ -61,11 +63,20 @@
         "content/claude.js"
       ],
       "run_at": "document_idle"
+    },
+    {
+      "matches": [
+        "http://localhost:5173/*"
+      ],
+      "js": [
+        "content/userManager.js"
+      ],
+      "run_at": "document_idle"
     }
   ],
   "action": {
     "default_popup": "popup/popup.html",
-    "default_title": "AI Chat Logger"
+    "default_title": "Memora Logger"
   },
   "icons": {}
 }

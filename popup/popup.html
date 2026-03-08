@@ -3,8 +3,7 @@
 
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>AI Chat Logger</title>
+  <title>Memora Logger</title>
   <style>
     /* ─── Reset & Base ─── */
     * {
@@ -14,280 +13,339 @@
     }
 
     body {
-      width: 400px;
-      min-height: 460px;
-      max-height: 560px;
+      width: 380px;
       font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
-      background: #0f0f14;
-      color: #e4e4e7;
+      background: #FAFBFF;
+      color: #1e293b;
       overflow-y: auto;
     }
 
     /* ─── Header ─── */
     .header {
-      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
-      padding: 16px 20px;
+      background: #fff;
+      padding: 14px 18px;
       display: flex;
       align-items: center;
       justify-content: space-between;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+      border-bottom: 1px solid #e2e8f0;
     }
 
-    .header-left {
+    .brand {
       display: flex;
       align-items: center;
       gap: 10px;
     }
 
     .logo {
-      width: 28px;
-      height: 28px;
-      background: linear-gradient(135deg, #6366f1, #8b5cf6);
+      width: 30px;
+      height: 30px;
+      background: linear-gradient(135deg, #4F46E5, #7e22ce);
       border-radius: 8px;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 14px;
-    }
-
-    .header h1 {
       font-size: 15px;
-      font-weight: 600;
-      letter-spacing: -0.3px;
+      font-weight: 700;
+      color: white;
     }
 
-    .status-badge {
+    .brand-text {
       display: flex;
-      align-items: center;
-      gap: 6px;
-      font-size: 11px;
-      color: #a1a1aa;
-      background: rgba(255, 255, 255, 0.04);
-      padding: 4px 10px;
-      border-radius: 20px;
+      flex-direction: column;
     }
 
-    .status-dot {
+    .brand-name {
+      font-size: 14px;
+      font-weight: 700;
+      color: #4F46E5;
+      letter-spacing: -0.3px;
+      line-height: 1.1;
+    }
+
+    .brand-sub {
+      font-size: 10px;
+      color: #94a3b8;
+    }
+
+    /* Platform indicator dots */
+    .platform-dots {
+      display: flex;
+      gap: 5px;
+      align-items: center;
+    }
+
+    .platform-dot {
       width: 7px;
       height: 7px;
       border-radius: 50%;
-      background: #ef4444;
-      transition: background 0.3s;
-    }
-
-    .status-dot.connected {
-      background: #22c55e;
-    }
-
-    /* ─── Stats bar ─── */
-    .stats-bar {
-      display: flex;
-      gap: 1px;
-      background: rgba(255, 255, 255, 0.03);
-      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
-    }
-
-    .stat {
-      flex: 1;
-      text-align: center;
-      padding: 10px 8px;
-    }
-
-    .stat-value {
-      font-size: 18px;
-      font-weight: 700;
-      color: #a78bfa;
-    }
-
-    .stat-label {
-      font-size: 10px;
-      color: #71717a;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      margin-top: 2px;
-    }
-
-    /* ─── Captures list ─── */
-    .section-title {
-      font-size: 11px;
-      color: #71717a;
-      text-transform: uppercase;
-      letter-spacing: 0.8px;
-      padding: 12px 20px 6px;
-    }
-
-    .captures-list {
-      padding: 0 12px 12px;
-      max-height: 300px;
-      overflow-y: auto;
-    }
-
-    .captures-list::-webkit-scrollbar {
-      width: 4px;
-    }
-
-    .captures-list::-webkit-scrollbar-track {
-      background: transparent;
-    }
-
-    .captures-list::-webkit-scrollbar-thumb {
-      background: #27272a;
-      border-radius: 4px;
-    }
-
-    .capture-card {
-      background: rgba(255, 255, 255, 0.03);
-      border: 1px solid rgba(255, 255, 255, 0.05);
-      border-radius: 10px;
-      padding: 12px 14px;
-      margin-bottom: 8px;
-      transition: background 0.2s, border-color 0.2s;
+      opacity: 0.3;
+      transition: opacity 0.3s;
       cursor: default;
     }
 
-    .capture-card:hover {
-      background: rgba(255, 255, 255, 0.06);
-      border-color: rgba(139, 92, 246, 0.3);
+    .platform-dot.active {
+      opacity: 1;
     }
 
-    .capture-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
+    .dot-chatgpt  { background: #16a34a; }
+    .dot-gemini   { background: #3b82f6; }
+    .dot-perplexity { background: #9333ea; }
+    .dot-claude   { background: #ea580c; }
+
+    /* ─── Sections ─── */
+    .section {
+      padding: 14px 16px 6px;
+    }
+
+    .section-label {
+      font-size: 10px;
+      font-weight: 600;
+      color: #94a3b8;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
       margin-bottom: 8px;
     }
 
-    .source-badge {
-      font-size: 10px;
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      padding: 3px 8px;
-      border-radius: 6px;
-      color: #fff;
-    }
-
-    .source-badge.chatgpt {
-      background: rgba(16, 163, 127, 0.25);
-      color: #34d399;
-    }
-
-    .source-badge.gemini {
-      background: rgba(59, 130, 246, 0.25);
-      color: #60a5fa;
-    }
-
-    .source-badge.perplexity {
-      background: rgba(168, 85, 247, 0.25);
-      color: #c084fc;
-    }
-
-    .source-badge.claude {
-      background: rgba(251, 146, 60, 0.25);
-      color: #fb923c;
-    }
-
-    .capture-time {
-      font-size: 10px;
-      color: #52525b;
-    }
-
-    .capture-prompt {
-      font-size: 12px;
-      color: #d4d4d8;
-      line-height: 1.4;
-      display: -webkit-box;
-      -webkit-line-clamp: 2;
-      -webkit-box-orient: vertical;
+    /* ─── Active session card ─── */
+    .active-session-card {
+      background: linear-gradient(135deg, #4F46E5 0%, #7e22ce 100%);
+      border-radius: 12px;
+      padding: 14px 16px;
+      color: white;
+      position: relative;
       overflow: hidden;
     }
 
-    .capture-prompt::before {
-      content: '▸ ';
-      color: #6366f1;
-      font-weight: 700;
+    .active-session-card::before {
+      content: '';
+      position: absolute;
+      top: -24px;
+      right: -24px;
+      width: 80px;
+      height: 80px;
+      background: rgba(255, 255, 255, 0.08);
+      border-radius: 50%;
     }
 
-    .empty-state {
+    .active-session-card::after {
+      content: '';
+      position: absolute;
+      bottom: -16px;
+      right: 30px;
+      width: 50px;
+      height: 50px;
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 50%;
+    }
+
+    .active-session-name {
+      font-size: 15px;
+      font-weight: 600;
+      margin-bottom: 7px;
+      position: relative;
+    }
+
+    .active-session-meta {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      position: relative;
+    }
+
+    .active-tag {
+      font-size: 10px;
+      font-weight: 600;
+      padding: 2px 8px;
+      border-radius: 20px;
+      background: rgba(255, 255, 255, 0.2);
+      color: rgba(255, 255, 255, 0.92);
+      letter-spacing: 0.3px;
+    }
+
+    .active-model {
+      font-size: 10px;
+      color: rgba(255, 255, 255, 0.65);
+    }
+
+    .no-session-card {
+      background: #f1f5f9;
+      border: 1.5px dashed #cbd5e1;
+      border-radius: 12px;
+      padding: 20px 16px;
       text-align: center;
-      padding: 40px 20px;
-      color: #52525b;
     }
 
-    .empty-state .icon {
-      font-size: 32px;
-      margin-bottom: 10px;
-      opacity: 0.5;
-    }
-
-    .empty-state p {
-      font-size: 13px;
+    .no-session-card p {
+      font-size: 12px;
+      color: #94a3b8;
       line-height: 1.6;
     }
 
-    /* ─── Settings ─── */
-    .settings {
-      padding: 12px 20px 16px;
-      border-top: 1px solid rgba(255, 255, 255, 0.06);
-    }
-
-    .settings label {
-      display: block;
-      font-size: 11px;
-      color: #71717a;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      margin-bottom: 6px;
-    }
-
-    .settings-row {
+    /* ─── Session list ─── */
+    .sessions-list {
+      padding: 0 16px 14px;
       display: flex;
-      gap: 8px;
+      flex-direction: column;
+      gap: 6px;
     }
 
-    .settings input {
-      flex: 1;
-      background: rgba(255, 255, 255, 0.05);
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      color: #e4e4e7;
-      padding: 8px 12px;
-      border-radius: 8px;
-      font-size: 12px;
-      font-family: 'Cascadia Code', 'Fira Code', monospace;
-      outline: none;
-      transition: border-color 0.2s;
-    }
-
-    .settings input:focus {
-      border-color: rgba(99, 102, 241, 0.5);
-    }
-
-    .settings button {
-      background: linear-gradient(135deg, #6366f1, #8b5cf6);
-      color: #fff;
-      border: none;
-      padding: 8px 16px;
-      border-radius: 8px;
-      font-size: 12px;
-      font-weight: 600;
+    .session-card {
+      background: #fff;
+      border: 1.5px solid #e2e8f0;
+      border-radius: 10px;
+      padding: 10px 13px;
+      display: flex;
+      align-items: center;
+      gap: 11px;
       cursor: pointer;
-      transition: opacity 0.2s;
+      transition: border-color 0.15s, background 0.15s;
+      user-select: none;
     }
 
-    .settings button:hover {
-      opacity: 0.85;
+    .session-card:hover {
+      border-color: #a5b4fc;
+      background: #f8f7ff;
     }
 
-    .save-feedback {
-      font-size: 11px;
-      color: #22c55e;
-      margin-top: 6px;
+    .session-card.active {
+      border-color: #4F46E5;
+      background: #eef2ff;
+    }
+
+    .session-icon {
+      font-size: 16px;
+      width: 32px;
+      height: 32px;
+      background: #f1f5f9;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .session-card.active .session-icon {
+      background: #e0e7ff;
+    }
+
+    .session-info {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .session-title {
+      font-size: 13px;
+      font-weight: 500;
+      color: #1e293b;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .session-meta {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-top: 3px;
+    }
+
+    .tag-sm {
+      font-size: 9px;
+      font-weight: 600;
+      padding: 2px 6px;
+      border-radius: 10px;
+      letter-spacing: 0.3px;
+    }
+
+    .tag-research  { background: #e0e7ff; color: #4338CA; }
+    .tag-coding    { background: #f1f5f9; color: #475569; }
+    .tag-writing   { background: #f5f5f4; color: #78716c; }
+    .tag-general   { background: #e0f2fe; color: #0369a1; }
+
+    .session-date {
+      font-size: 10px;
+      color: #94a3b8;
+    }
+
+    .session-check {
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: #4F46E5;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
       opacity: 0;
-      transition: opacity 0.3s;
+      transition: opacity 0.15s;
     }
 
-    .save-feedback.visible {
+    .session-card.active .session-check {
       opacity: 1;
+    }
+
+    /* New session button */
+    .new-session-btn {
+      background: transparent;
+      border: 1.5px dashed #cbd5e1;
+      border-radius: 10px;
+      padding: 9px 13px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      cursor: pointer;
+      width: 100%;
+      color: #94a3b8;
+      font-size: 12px;
+      font-family: inherit;
+      transition: border-color 0.15s, color 0.15s;
+    }
+
+    .new-session-btn:hover {
+      border-color: #4F46E5;
+      color: #4F46E5;
+    }
+
+    .new-session-icon {
+      font-size: 14px;
+      line-height: 1;
+    }
+
+    /* ─── Footer ─── */
+    .footer {
+      padding: 10px 16px;
+      border-top: 1px solid #e2e8f0;
+      background: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .capture-count {
+      font-size: 11px;
+      color: #94a3b8;
+    }
+
+    .capture-count strong {
+      color: #4F46E5;
+      font-weight: 600;
+    }
+
+    .open-web-btn {
+      font-size: 11px;
+      font-weight: 500;
+      color: #4F46E5;
+      background: #eef2ff;
+      border: none;
+      padding: 5px 12px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-family: inherit;
+      transition: background 0.15s;
+    }
+
+    .open-web-btn:hover {
+      background: #e0e7ff;
     }
   </style>
 </head>
@@ -296,49 +354,41 @@
 
   <!-- Header -->
   <div class="header">
-    <div class="header-left">
-      <div class="logo">📝</div>
-      <h1>AI Chat Logger</h1>
+    <div class="brand">
+      <div class="logo">M</div>
+      <div class="brand-text">
+        <span class="brand-name">Memora</span>
+        <span class="brand-sub">Chat Logger</span>
+      </div>
     </div>
-    <div class="status-badge">
-      <span class="status-dot" id="statusDot"></span>
-      <span id="statusText">Checking...</span>
-    </div>
-  </div>
-
-  <!-- Stats -->
-  <div class="stats-bar">
-    <div class="stat">
-      <div class="stat-value" id="totalCount">0</div>
-      <div class="stat-label">Total</div>
-    </div>
-    <div class="stat">
-      <div class="stat-value" id="todayCount">0</div>
-      <div class="stat-label">Today</div>
-    </div>
-    <div class="stat">
-      <div class="stat-value" id="sourcesCount">0</div>
-      <div class="stat-label">Sources</div>
+    <div class="platform-dots" id="platformDots">
+      <div class="platform-dot dot-chatgpt"    title="ChatGPT"></div>
+      <div class="platform-dot dot-gemini"     title="Gemini"></div>
+      <div class="platform-dot dot-perplexity" title="Perplexity"></div>
+      <div class="platform-dot dot-claude"     title="Claude"></div>
     </div>
   </div>
 
-  <!-- Recent captures -->
-  <div class="section-title">Recent Captures</div>
-  <div class="captures-list" id="capturesList">
-    <div class="empty-state" id="emptyState">
-      <div class="icon">💬</div>
-      <p>No captures yet.<br>Chat on any supported AI platform to get started.</p>
+  <!-- Active session -->
+  <div class="section">
+    <div class="section-label">Active Session</div>
+    <div id="activeSessionArea">
+      <div class="no-session-card">
+        <p>No session selected.<br>Choose one below to start logging.</p>
+      </div>
     </div>
   </div>
 
-  <!-- Settings -->
-  <div class="settings">
-    <label for="backendUrl">Backend URL</label>
-    <div class="settings-row">
-      <input type="text" id="backendUrl" placeholder="http://localhost:3005">
-      <button id="saveBtn">Save</button>
-    </div>
-    <div class="save-feedback" id="saveFeedback">✓ Saved</div>
+  <!-- Sessions list -->
+  <div class="section">
+    <div class="section-label">Sessions</div>
+  </div>
+  <div class="sessions-list" id="sessionsList"></div>
+
+  <!-- Footer -->
+  <div class="footer">
+    <span class="capture-count">Today: <strong id="captureCount">0</strong> captures</span>
+    <button class="open-web-btn" id="openWebBtn">Open Memora ↗</button>
   </div>
 
   <script src="popup.js"></script>

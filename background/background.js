@@ -30,12 +30,16 @@ async function sendToBackend(payload, attempt = 1) {
     const endpoint = `${backendUrl}/api/chats`;
 
     try {
+        const storageResult = await chrome.storage.local.get('userId');
+        const userId = storageResult.userId || 'unknown';
+
         const response = await fetch(endpoint, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 source: payload.source,
                 session_id: payload.session_id,
+                user_id: userId,
                 user_prompt: payload.user_prompt,
                 llm_response: payload.llm_response,
                 metadata: {
