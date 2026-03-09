@@ -7,8 +7,12 @@
 (function () {
   'use strict';
 
-  // ─── Dummy sessions (mirrored from Memora web-client) ───
-  const SESSIONS = [
+  // ─── State ───
+  let SESSIONS = [];
+  let selectedSessionId = null;
+  const API_BASE = 'http://localhost:8080/api';
+
+  const DUMMY_SESSIONS = [
     {
       id: 'research-1',
       title: 'Academic Research',
@@ -49,11 +53,11 @@
 
   // ─── DOM refs ───
   const activeSessionArea = document.getElementById('activeSessionArea');
-  const sessionsList      = document.getElementById('sessionsList');
-  const captureCount      = document.getElementById('captureCount');
-  const openWebBtn        = document.getElementById('openWebBtn');
+  const sessionsList = document.getElementById('sessionsList');
+  const captureCount = document.getElementById('captureCount');
+  const openWebBtn = document.getElementById('openWebBtn');
+  const displayUserId = document.getElementById('displayUserId');
 
-  let selectedSessionId = null;
 
   // ─── Helpers ───
 
@@ -113,12 +117,80 @@
       sessionsList.appendChild(card);
     });
 
-    // New session button
-    const newBtn = document.createElement('button');
-    newBtn.className = 'new-session-btn';
-    newBtn.innerHTML = `<span class="new-session-icon">＋</span> New Session`;
-    newBtn.addEventListener('click', openMemora);
-    sessionsList.appendChild(newBtn);
+  }
+
+  // ─── API Fetching ───
+
+  async function fetchSessionsData(userId) {
+    if (!userId) return;
+
+    try {
+      // 1. Fetch all sessions
+      const sessionsRes = await fetch(`${API_BASE}/users/${userId}/sessions/?skip=0&limit=100`);
+      if (sessionsRes.ok) {
+        const data = await sessionsRes.json();
+        // Map backend data to UI format
+        const fetchedSessions = (data.sessions || []).map(s => ({
+          id: s.session_id,
+          title: s.session_name || 'Untitled Session',
+          description: s.session_description || '',
+          tag: 'MEMORA',
+          tagClass: 'tag-general',
+          icon: '📝',
+          model: 'General',
+          date: s.created_at,
+        }));
+
+        // If the API call succeeded but returned zero sessions, use dummy data as a fallback
+        if (fetchedSessions.length === 0) {
+          SESSIONS = DUMMY_SESSIONS;
+        } else {
+          SESSIONS = fetchedSessions;
+        }
+      } else {
+        throw new Error(`API responded with ${sessionsRes.status}`);
+      }
+
+      // 2. Fetch current active session
+      const currentRes = await fetch(`${API_BASE}/users/${userId}/current-session`);
+      if (currentRes.ok) {
+        const currentData = await currentRes.json();
+        if (currentData.current_session_id) {
+          selectedSessionId = currentData.current_session_id;
+          // Cache to sync storage for background.js
+          await chrome.storage.sync.set({ selectedSessionId });
+        }
+      }
+    } catch (e) {
+      console.error('[AI Chat Logger] Error fetching sessions. Falling back to dummy data:', e);
+      SESSIONS = DUMMY_SESSIONS;
+
+      // If no valid selection initially, optionally auto-select the first dummy session
+      if (!selectedSessionId || selectedSessionId === 'null' || !SESSIONS.find(s => s.id === selectedSessionId)) {
+        selectedSessionId = SESSIONS[0].id;
+        await chrome.storage.sync.set({ selectedSessionId });
+      }
+    }
+  }
+
+  async function updateActiveSession(userId, sessionId) {
+    if (!userId || !sessionId) return;
+    try {
+      const response = await fetch(`${API_BASE}/users/${userId}/active-session`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ session_id: sessionId })
+      });
+      if (!response.ok) {
+        throw new Error(`Failed to update active session: ${response.status}`);
+      }
+      return await response.json();
+    } catch (err) {
+      console.error('[AI Chat Logger] Error updating active session:', err);
+      throw err;
+    }
   }
 
   // ─── Active platform dots ───
@@ -135,10 +207,10 @@
     );
 
     const dotMap = {
-      chatgpt:    document.querySelector('.dot-chatgpt'),
-      gemini:     document.querySelector('.dot-gemini'),
+      chatgpt: document.querySelector('.dot-chatgpt'),
+      gemini: document.querySelector('.dot-gemini'),
       perplexity: document.querySelector('.dot-perplexity'),
-      claude:     document.querySelector('.dot-claude'),
+      claude: document.querySelector('.dot-claude'),
     };
 
     Object.entries(dotMap).forEach(([source, el]) => {
@@ -158,12 +230,35 @@
     captureCount.textContent = count;
   }
 
+  // ─── User ID ───
+
+  async function loadUserId() {
+    const result = await chrome.storage.local.get('userId');
+    const userId = result.userId || '5ca4d3ee-a139-44f9-9f9a-84655025a8f2';
+    if (displayUserId) {
+      displayUserId.textContent = userId;
+    }
+  }
+
   // ─── Actions ───
 
   async function selectSession(id) {
     // Clicking the already-active session deselects it
     selectedSessionId = selectedSessionId === id ? null : id;
     await chrome.storage.sync.set({ selectedSessionId });
+
+    // Sync the selection to the backend via PUT
+    if (selectedSessionId) {
+      const resultId = await chrome.storage.local.get('userId');
+      const userId = resultId.userId || '5ca4d3ee-a139-44f9-9f9a-84655025a8f2';
+      try {
+        await updateActiveSession(userId, selectedSessionId);
+        console.log('[AI Chat Logger] Active session updated on backend:', selectedSessionId);
+      } catch (err) {
+        console.warn('[AI Chat Logger] Could not update session on backend:', err);
+      }
+    }
+
     renderActiveSession();
     renderSessions();
   }
@@ -175,13 +270,29 @@
   // ─── Init ───
 
   async function init() {
-    const result = await chrome.storage.sync.get('selectedSessionId');
-    selectedSessionId = result.selectedSessionId || null;
+    const resultId = await chrome.storage.local.get('userId');
+    const userId = resultId.userId || '5ca4d3ee-a139-44f9-9f9a-84655025a8f2';
+
+    // First, restore fallback selected session from sync in case API isn't up
+    const syncRes = await chrome.storage.sync.get('selectedSessionId');
+    selectedSessionId = syncRes.selectedSessionId || null;
+
+    // Fetch dynamic sessions from backend
+    await fetchSessionsData(userId);
+
+    // If fetch failed completely, SESSIONS might be empty. Enforce dummy fallback as last resort.
+    if (!SESSIONS || SESSIONS.length === 0) {
+      SESSIONS = DUMMY_SESSIONS;
+      if (!selectedSessionId || !SESSIONS.find(s => s.id === selectedSessionId)) {
+        selectedSessionId = SESSIONS[0].id;
+      }
+    }
 
     renderActiveSession();
     renderSessions();
     loadCaptureCount();
     updatePlatformDots();
+    loadUserId();
   }
 
   openWebBtn.addEventListener('click', openMemora);

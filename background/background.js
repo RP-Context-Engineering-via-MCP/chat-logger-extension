@@ -30,8 +30,11 @@ async function sendToBackend(payload, attempt = 1) {
     const endpoint = `${backendUrl}/api/chats`;
 
     try {
-        const storageResult = await chrome.storage.local.get('userId');
-        const userId = storageResult.userId || 'unknown';
+        const localData = await chrome.storage.local.get('userId');
+        const syncData = await chrome.storage.sync.get('selectedSessionId');
+
+        const userId = localData.userId || '5ca4d3ee-a139-44f9-9f9a-84655025a8f2';
+        const selectedSessionId = syncData.selectedSessionId || null;
 
         const response = await fetch(endpoint, {
             method: 'POST',
@@ -39,6 +42,7 @@ async function sendToBackend(payload, attempt = 1) {
             body: JSON.stringify({
                 source: payload.source,
                 session_id: payload.session_id,
+                selected_session_id: selectedSessionId,
                 user_id: userId,
                 user_prompt: payload.user_prompt,
                 llm_response: payload.llm_response,

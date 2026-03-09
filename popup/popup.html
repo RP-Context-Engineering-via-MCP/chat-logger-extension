@@ -87,10 +87,21 @@
       opacity: 1;
     }
 
-    .dot-chatgpt  { background: #16a34a; }
-    .dot-gemini   { background: #3b82f6; }
-    .dot-perplexity { background: #9333ea; }
-    .dot-claude   { background: #ea580c; }
+    .dot-chatgpt {
+      background: #16a34a;
+    }
+
+    .dot-gemini {
+      background: #3b82f6;
+    }
+
+    .dot-perplexity {
+      background: #9333ea;
+    }
+
+    .dot-claude {
+      background: #ea580c;
+    }
 
     /* ─── Sections ─── */
     .section {
@@ -257,10 +268,25 @@
       letter-spacing: 0.3px;
     }
 
-    .tag-research  { background: #e0e7ff; color: #4338CA; }
-    .tag-coding    { background: #f1f5f9; color: #475569; }
-    .tag-writing   { background: #f5f5f4; color: #78716c; }
-    .tag-general   { background: #e0f2fe; color: #0369a1; }
+    .tag-research {
+      background: #e0e7ff;
+      color: #4338CA;
+    }
+
+    .tag-coding {
+      background: #f1f5f9;
+      color: #475569;
+    }
+
+    .tag-writing {
+      background: #f5f5f4;
+      color: #78716c;
+    }
+
+    .tag-general {
+      background: #e0f2fe;
+      color: #0369a1;
+    }
 
     .session-date {
       font-size: 10px;
@@ -347,6 +373,15 @@
     .open-web-btn:hover {
       background: #e0e7ff;
     }
+
+    .user-id-display {
+      font-size: 10px;
+      color: #64748b;
+      font-family: monospace;
+      background: #f1f5f9;
+      padding: 3px 8px;
+      border-radius: 6px;
+    }
   </style>
 </head>
 
@@ -362,10 +397,10 @@
       </div>
     </div>
     <div class="platform-dots" id="platformDots">
-      <div class="platform-dot dot-chatgpt"    title="ChatGPT"></div>
-      <div class="platform-dot dot-gemini"     title="Gemini"></div>
+      <div class="platform-dot dot-chatgpt" title="ChatGPT"></div>
+      <div class="platform-dot dot-gemini" title="Gemini"></div>
       <div class="platform-dot dot-perplexity" title="Perplexity"></div>
-      <div class="platform-dot dot-claude"     title="Claude"></div>
+      <div class="platform-dot dot-claude" title="Claude"></div>
     </div>
   </div>
 
@@ -388,6 +423,7 @@
   <!-- Footer -->
   <div class="footer">
     <span class="capture-count">Today: <strong id="captureCount">0</strong> captures</span>
+    <span class="user-id-display" id="displayUserId" title="Current User ID">...</span>
     <button class="open-web-btn" id="openWebBtn">Open Memora ↗</button>
   </div>
 
