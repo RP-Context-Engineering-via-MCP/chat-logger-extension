@@ -33,7 +33,10 @@ async function sendToBackend(payload, attempt = 1) {
         const localData = await chrome.storage.local.get('userId');
         const syncData = await chrome.storage.sync.get('selectedSessionId');
 
-        const userId = localData.userId || '5ca4d3ee-a139-44f9-9f9a-84655025a8f2';
+        const userId = localData.userId;
+        if (!userId) {
+            throw new Error('No userId in storage — user is not logged in to Memora.');
+        }
         const selectedSessionId = syncData.selectedSessionId || null;
 
         const response = await fetch(endpoint, {

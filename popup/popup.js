@@ -10,7 +10,7 @@
   // ─── State ───
   let SESSIONS = [];
   let selectedSessionId = null;
-  const API_BASE = 'http://localhost:8080/api';
+  const API_BASE = 'http://localhost:8000/api';
 
   const DUMMY_SESSIONS = [
     {
@@ -234,9 +234,8 @@
 
   async function loadUserId() {
     const result = await chrome.storage.local.get('userId');
-    const userId = result.userId || '5ca4d3ee-a139-44f9-9f9a-84655025a8f2';
     if (displayUserId) {
-      displayUserId.textContent = userId;
+      displayUserId.textContent = result.userId || 'Not logged in';
     }
   }
 
@@ -250,7 +249,13 @@
     // Sync the selection to the backend via PUT
     if (selectedSessionId) {
       const resultId = await chrome.storage.local.get('userId');
-      const userId = resultId.userId || '5ca4d3ee-a139-44f9-9f9a-84655025a8f2';
+      const userId = resultId.userId;
+      if (!userId) {
+        console.warn('[AI Chat Logger] No userId available — skipping backend session update.');
+        renderActiveSession();
+        renderSessions();
+        return;
+      }
       try {
         await updateActiveSession(userId, selectedSessionId);
         console.log('[AI Chat Logger] Active session updated on backend:', selectedSessionId);
@@ -271,7 +276,20 @@
 
   async function init() {
     const resultId = await chrome.storage.local.get('userId');
-    const userId = resultId.userId || '5ca4d3ee-a139-44f9-9f9a-84655025a8f2';
+    const userId = resultId.userId;
+
+    loadUserId();
+    loadCaptureCount();
+    updatePlatformDots();
+
+    if (!userId) {
+      activeSessionArea.innerHTML = `
+        <div class="no-session-card">
+          <p>Not logged in.<br>Open <strong>Memora</strong> and sign in to start logging.</p>
+        </div>`;
+      sessionsList.innerHTML = '';
+      return;
+    }
 
     // First, restore fallback selected session from sync in case API isn't up
     const syncRes = await chrome.storage.sync.get('selectedSessionId');
@@ -290,9 +308,6 @@
 
     renderActiveSession();
     renderSessions();
-    loadCaptureCount();
-    updatePlatformDots();
-    loadUserId();
   }
 
   openWebBtn.addEventListener('click', openMemora);
